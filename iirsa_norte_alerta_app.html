@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IIRSA Norte Alerta — Prototipo App</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;700&display=swap');
+
+  :root {
+    --bg0: #0d0f1a;
+    --bg1: #151829;
+    --bg2: #1e2240;
+    --bg3: #252b4a;
+    --accent: #f97316;
+    --accent2: #fb923c;
+    --blue: #38bdf8;
+    --green: #34d399;
+    --red: #f87171;
+    --yellow: #fbbf24;
+    --purple: #a78bfa;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --border: rgba(255,255,255,0.08);
+    --road: #e2a44a;
+    --river: #2d7bab;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Barlow', sans-serif;
+    background: linear-gradient(135deg, #0a0c18 0%, #0e1120 50%, #111628 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 16px 40px;
+    color: var(--text);
+  }
+
+  /* ── HEADER ─────────────────────────────────────────── */
+  .app-header {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 24px;
+    padding: 0 4px;
+  }
+  .app-brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .brand-icon {
+    width: 44px; height: 44px;
+    background: linear-gradient(135deg, var(--accent), #c2410c);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px;
+  }
+  .brand-text h1 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 22px; font-weight: 700; letter-spacing: 0.5px;
+    color: var(--text);
+  }
+  .brand-text p { font-size: 12px; color: var(--text2); margin-top: 1px; }
+
+  .header-badges {
+    display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end;
+  }
+  .badge {
+    padding: 4px 10px; border-radius: 20px;
+    font-size: 11px; font-weight: 600; letter-spacing: 0.3px;
+  }
+  .badge-orange { background: rgba(249,115,22,0.2); color: var(--accent2); border: 1px solid rgba(249,115,22,0.3); }
+  .badge-blue   { background: rgba(56,189,248,0.15); color: var(--blue); border: 1px solid rgba(56,189,248,0.25); }
+  .badge-green  { background: rgba(52,211,153,0.15); color: var(--green); border: 1px solid rgba(52,211,153,0.25); }
+
+  /* ── MAIN LAYOUT ───────────────────────────────────── */
+  .main-layout {
+    width: 100%; max-width: 960px;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 16px;
+    align-items: start;
+  }
+
+  /* ── PHONE FRAME ───────────────────────────────────── */
+  .phone-frame {
+    width: 320px;
+    background: #060810;
+    border-radius: 36px;
+    border: 2px solid rgba(255,255,255,0.12);
+    overflow: hidden;
+    position: relative;
+    box-shadow: 0 0 60px rgba(249,115,22,0.12), 0 20px 60px rgba(0,0,0,0.6);
+  }
+  .phone-notch {
+    background: #060810;
+    height: 28px;
+    display: flex; align-items: center; justify-content: center;
+    gap: 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .notch-pill { width: 80px; height: 8px; background: #1a1a2a; border-radius: 4px; }
+  .notch-cam { width: 8px; height: 8px; background: #1a1a2a; border-radius: 50%; }
+
+  .phone-screen {
+    height: 600px;
+    overflow: hidden;
+    position: relative;
+    background: var(--bg0);
+  }
+
+  /* ── SCREENS ───────────────────────────────────────── */
+  .screen {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: none; flex-direction: column;
+    background: var(--bg0);
+    overflow-y: auto;
+  }
+  .screen.active { display: flex; }
+
+  /* ── MAP SCREEN ─────────────────────────────────────── */
+  .map-topbar {
+    padding: 12px 14px 8px;
+    display: flex; align-items: center; gap: 8px;
+    position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+    background: linear-gradient(to bottom, rgba(6,8,16,0.95) 60%, transparent);
+  }
+  .map-search {
+    flex: 1;
+    background: rgba(30,34,64,0.9);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px 14px;
+    font-size: 13px; color: var(--text2);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .map-search span { font-size: 14px; }
+  .map-user-btn {
+    width: 34px; height: 34px;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 14px; font-weight: 700; color: white;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  /* SVG Map */
+  .map-svg-container {
+    width: 100%; height: 100%;
+    position: relative;
+  }
+
+  /* Floating incident chips on map */
+  .map-chip {
+    position: absolute;
+    background: rgba(6,8,16,0.9);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 12px;
+    padding: 5px 9px;
+    font-size: 11px;
+    display: flex; align-items: center; gap: 5px;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: transform 0.2s;
+    z-index: 5;
+  }
+  .map-chip:hover { transform: scale(1.05); }
+  .chip-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Map bottom panel */
+  .map-bottom {
+    position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
+    background: linear-gradient(to top, rgba(6,8,16,1) 50%, transparent);
+    padding: 40px 14px 14px;
+  }
+  .map-bottom-row {
+    display: flex; gap: 8px; margin-bottom: 10px;
+  }
+  .map-stat {
+    flex: 1;
+    background: rgba(30,34,64,0.85);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 8px 10px;
+    text-align: center;
+  }
+  .map-stat-val { font-size: 16px; font-weight: 700; color: var(--accent); line-height: 1; }
+  .map-stat-lbl { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+  .report-fab {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), #c2410c);
+    border: none;
+    border-radius: 16px;
+    padding: 13px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px; font-weight: 700;
+    color: white; cursor: pointer;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    letter-spacing: 0.3px;
+  }
+
+  /* ── REPORT SCREEN ───────────────────────────────────── */
+  .screen-header {
+    padding: 14px 14px 10px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; gap: 10px;
+  }
+  .screen-header h2 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 17px; font-weight: 700; letter-spacing: 0.3px;
+  }
+  .screen-header .back-btn {
+    width: 28px; height: 28px;
+    background: var(--bg2);
+    border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 13px; color: var(--text2);
+    flex-shrink: 0;
+  }
+
+  .report-form { padding: 12px 14px; flex: 1; overflow-y: auto; }
+
+  .form-section { margin-bottom: 16px; }
+  .form-label {
+    font-size: 11px; font-weight: 600; color: var(--text3);
+    letter-spacing: 0.8px; text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* Incident type grid */
+  .incident-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 7px;
+  }
+  .incident-btn {
+    background: var(--bg2);
+    border: 1.5px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 6px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+  .incident-btn:hover, .incident-btn.active {
+    border-color: var(--accent);
+    background: rgba(249,115,22,0.12);
+  }
+  .incident-btn .icon { font-size: 20px; line-height: 1; }
+  .incident-btn .lbl { font-size: 10px; color: var(--text2); margin-top: 4px; line-height: 1.2; }
+
+  /* Location row */
+  .location-row {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .location-row .loc-icon { font-size: 18px; color: var(--accent); }
+  .location-row .loc-text { flex: 1; }
+  .location-row .loc-main { font-size: 12px; font-weight: 600; }
+  .location-row .loc-sub { font-size: 10px; color: var(--text3); margin-top: 1px; }
+  .location-row .loc-action { font-size: 10px; color: var(--blue); cursor: pointer; }
+
+  /* Severity bar */
+  .severity-bar { display: flex; gap: 6px; }
+  .sev-btn {
+    flex: 1; padding: 8px 4px; border-radius: 8px;
+    border: 1.5px solid var(--border); cursor: pointer;
+    text-align: center; font-size: 10px; font-weight: 600;
+    transition: all 0.2s;
+  }
+  .sev-btn.low  { color: var(--green); }
+  .sev-btn.med  { color: var(--yellow); }
+  .sev-btn.high { color: var(--red); }
+  .sev-btn.active.low  { background: rgba(52,211,153,0.15); border-color: var(--green); }
+  .sev-btn.active.med  { background: rgba(251,191,36,0.15);  border-color: var(--yellow); }
+  .sev-btn.active.high { background: rgba(248,113,113,0.15); border-color: var(--red); }
+
+  .form-input {
+    width: 100%;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 12px; color: var(--text);
+    resize: none;
+  }
+  .form-input::placeholder { color: var(--text3); }
+
+  /* Photo row */
+  .photo-row { display: flex; gap: 8px; }
+  .photo-slot {
+    width: 72px; height: 60px;
+    background: var(--bg2);
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 18px; color: var(--text3);
+  }
+  .photo-slot .ps-lbl { font-size: 9px; margin-top: 3px; }
+  .photo-preview {
+    width: 72px; height: 60px;
+    border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .photo-preview svg { width: 100%; height: 100%; }
+
+  /* User type toggle */
+  .user-toggle { display: flex; gap: 6px; }
+  .ut-btn {
+    flex: 1; padding: 8px;
+    background: var(--bg2);
+    border: 1.5px solid var(--border);
+    border-radius: 10px;
+    text-align: center; cursor: pointer;
+    font-size: 11px; color: var(--text2);
+    transition: all 0.2s;
+  }
+  .ut-btn.active {
+    border-color: var(--blue);
+    background: rgba(56,189,248,0.12);
+    color: var(--blue);
+  }
+  .ut-btn .ut-icon { font-size: 16px; display: block; margin-bottom: 3px; }
+
+  .submit-btn {
+    width: 100%;
+    background: linear-gradient(135deg, var(--accent), #c2410c);
+    border: none; border-radius: 14px;
+    padding: 13px;
+    font-family: 'Barlow', sans-serif;
+    font-size: 14px; font-weight: 700; color: white;
+    cursor: pointer; margin-top: 8px;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+
+  /* ── CCO SCREEN ─────────────────────────────────────── */
+  .cco-header-stats {
+    padding: 10px 12px;
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 6px;
+  }
+  .cco-stat {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 6px;
+    text-align: center;
+  }
+  .cco-stat-val { font-size: 18px; font-weight: 700; line-height: 1; }
+  .cco-stat-lbl { font-size: 9px; color: var(--text3); margin-top: 2px; }
+
+  .cco-filter-row {
+    padding: 0 12px 8px;
+    display: flex; gap: 6px; overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .filter-chip {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px; font-weight: 600;
+    white-space: nowrap; cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    background: var(--bg2);
+    transition: all 0.15s;
+    flex-shrink: 0;
+  }
+  .filter-chip.active {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: rgba(249,115,22,0.12);
+  }
+
+  .incidents-list {
+    padding: 0 12px;
+    flex: 1; overflow-y: auto;
+  }
+  .incident-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .incident-card:hover { border-color: rgba(249,115,22,0.3); }
+  .inc-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .inc-type-badge {
+    width: 32px; height: 32px; border-radius: 8px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; flex-shrink: 0;
+  }
+  .inc-info { flex: 1; }
+  .inc-title { font-size: 12px; font-weight: 600; }
+  .inc-loc   { font-size: 10px; color: var(--text3); margin-top: 1px; }
+  .inc-meta  { display: flex; align-items: center; gap: 6px; }
+  .inc-time  { font-size: 10px; color: var(--text3); }
+  .inc-sev   { padding: 2px 7px; border-radius: 6px; font-size: 10px; font-weight: 600; }
+  .inc-source { font-size: 9px; color: var(--text3); margin-left: auto; display: flex; align-items: center; gap: 3px; }
+
+  .inc-detail-row {
+    display: flex; align-items: center;
+    border-top: 1px solid var(--border);
+    padding-top: 7px; margin-top: 4px;
+    gap: 10px;
+  }
+  .inc-detail-row .detail-item { font-size: 10px; color: var(--text3); display: flex; align-items: center; gap: 4px; }
+  .inc-actions { margin-left: auto; display: flex; gap: 5px; }
+  .inc-action-btn {
+    padding: 3px 9px; border-radius: 6px;
+    font-size: 10px; font-weight: 600;
+    border: none; cursor: pointer;
+  }
+  .btn-ositran { background: rgba(56,189,248,0.2); color: var(--blue); }
+  .btn-attend  { background: rgba(249,115,22,0.2); color: var(--accent2); }
+  .btn-close   { background: rgba(52,211,153,0.15); color: var(--green); }
+
+  /* ── OSITRAN API SCREEN ─────────────────────────────── */
+  .api-screen-content { padding: 12px 14px; flex: 1; overflow-y: auto; }
+  .api-status-banner {
+    background: rgba(52,211,153,0.1);
+    border: 1px solid rgba(52,211,153,0.25);
+    border-radius: 12px;
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 10px;
+    margin-bottom: 14px;
+  }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; flex-shrink: 0; }
+  @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(1.3); } }
+  .status-text .st-main { font-size: 12px; font-weight: 600; color: var(--green); }
+  .status-text .st-sub  { font-size: 10px; color: var(--text3); margin-top: 1px; }
+
+  .api-flow-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+    overflow: hidden;
+  }
+  .api-flow-header {
+    padding: 10px 12px;
+    display: flex; align-items: center; gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .api-flow-icon { font-size: 16px; }
+  .api-flow-title { font-size: 12px; font-weight: 600; flex: 1; }
+  .api-flow-method {
+    padding: 2px 8px; border-radius: 5px;
+    font-size: 10px; font-weight: 700; font-family: monospace;
+  }
+  .method-post { background: rgba(52,211,153,0.2); color: var(--green); }
+  .method-get  { background: rgba(56,189,248,0.2); color: var(--blue); }
+  .method-ws   { background: rgba(167,139,250,0.2); color: var(--purple); }
+
+  .api-flow-body { padding: 10px 12px; }
+  .api-endpoint {
+    font-family: monospace;
+    font-size: 10px;
+    color: var(--blue);
+    background: rgba(0,0,0,0.3);
+    padding: 6px 10px; border-radius: 6px; margin-bottom: 8px;
+    word-break: break-all;
+  }
+  .api-fields { display: flex; flex-direction: column; gap: 4px; }
+  .api-field { display: flex; justify-content: space-between; font-size: 10px; }
+  .api-field-key { color: var(--text3); }
+  .api-field-val { color: var(--text); font-weight: 500; }
+
+  .api-log {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 10px;
+    font-family: monospace; font-size: 9px;
+    max-height: 100px; overflow-y: auto;
+  }
+  .log-line { margin-bottom: 3px; }
+  .log-success { color: var(--green); }
+  .log-info    { color: var(--blue); }
+  .log-warn    { color: var(--yellow); }
+
+  /* ── SERVICES SCREEN (V2) ─────────────────────────────── */
+  .v2-banner {
+    margin: 12px 12px 8px;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, rgba(167,139,250,0.15), rgba(56,189,248,0.1));
+    border: 1px solid rgba(167,139,250,0.3);
+    border-radius: 10px;
+    font-size: 10px; color: var(--purple);
+    display: flex; align-items: center; gap: 6px;
+  }
+  .services-filter {
+    padding: 0 12px 8px;
+    display: flex; gap: 6px;
+  }
+  .svc-filter {
+    flex: 1; padding: 7px 4px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    text-align: center; cursor: pointer;
+    font-size: 10px; color: var(--text2);
+    transition: all 0.15s;
+  }
+  .svc-filter.active {
+    border-color: var(--accent);
+    background: rgba(249,115,22,0.12);
+    color: var(--accent);
+  }
+  .svc-filter .sf-icon { font-size: 16px; display: block; margin-bottom: 2px; }
+
+  .services-list { padding: 0 12px; flex: 1; overflow-y: auto; }
+  .service-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 10px 12px;
+    margin-bottom: 8px;
+    display: flex; gap: 10px;
+  }
+  .svc-icon-box {
+    width: 44px; height: 44px; border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; flex-shrink: 0;
+  }
+  .svc-info { flex: 1; }
+  .svc-name { font-size: 12px; font-weight: 600; }
+  .svc-sub  { font-size: 10px; color: var(--text3); margin-top: 1px; }
+  .svc-bottom { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
+  .svc-dist { font-size: 10px; color: var(--text2); }
+  .svc-price { font-size: 10px; color: var(--green); font-weight: 600; }
+  .svc-avail { padding: 2px 7px; border-radius: 5px; font-size: 9px; font-weight: 600; }
+  .avail-yes  { background: rgba(52,211,153,0.15); color: var(--green); }
+  .avail-no   { background: rgba(248,113,113,0.15); color: var(--red); }
+  .svc-nav-btn {
+    background: rgba(56,189,248,0.15);
+    border: none; border-radius: 8px;
+    padding: 5px 10px;
+    font-size: 10px; font-weight: 600; color: var(--blue);
+    cursor: pointer;
+  }
+
+  /* ── BOTTOM NAV ─────────────────────────────────────── */
+  .phone-nav {
+    background: rgba(10,12,24,0.98);
+    border-top: 1px solid var(--border);
+    display: flex;
+  }
+  .nav-btn {
+    flex: 1; padding: 10px 4px 8px;
+    display: flex; flex-direction: column; align-items: center; gap: 3px;
+    cursor: pointer; border: none; background: none;
+    color: var(--text3); font-family: 'Barlow', sans-serif;
+    font-size: 9px; transition: color 0.2s;
+  }
+  .nav-btn.active { color: var(--accent); }
+  .nav-btn .nav-icon { font-size: 18px; line-height: 1; }
+  .nav-indicator {
+    width: 4px; height: 4px; border-radius: 2px;
+    background: transparent; margin-top: 1px;
+    transition: background 0.2s;
+  }
+  .nav-btn.active .nav-indicator { background: var(--accent); }
+
+  /* ── RIGHT PANEL ─────────────────────────────────────── */
+  .right-panel {
+    display: flex; flex-direction: column; gap: 16px;
+  }
+
+  .info-card {
+    background: rgba(21,24,41,0.8);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+  .info-card h3 {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-size: 15px; font-weight: 700; letter-spacing: 0.3px;
+    margin-bottom: 12px; color: var(--text);
+    display: flex; align-items: center; gap: 8px;
+  }
+  .info-card h3 .ic-icon { font-size: 16px; }
+
+  /* Route map in right panel */
+  .route-map-card {
+    background: rgba(21,24,41,0.8);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 18px 20px;
+  }
+
+  /* Architecture diagram */
+  .arch-flow {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .arch-node {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 8px 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .arch-node .an-icon { font-size: 18px; flex-shrink: 0; }
+  .arch-node .an-info { flex: 1; }
+  .arch-node .an-name { font-size: 12px; font-weight: 600; }
+  .arch-node .an-desc { font-size: 10px; color: var(--text3); margin-top: 1px; }
+  .arch-node .an-badge {
+    padding: 2px 8px; border-radius: 5px;
+    font-size: 10px; font-weight: 600;
+  }
+  .arch-arrow { text-align: center; font-size: 11px; color: var(--text3); margin: -1px 0; }
+
+  /* Feature list */
+  .feature-list { display: flex; flex-direction: column; gap: 8px; }
+  .feature-item {
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .feat-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .feat-text .ft-title { font-size: 12px; font-weight: 600; }
+  .feat-text .ft-desc  { font-size: 11px; color: var(--text3); margin-top: 1px; line-height: 1.4; }
+
+  /* KPI row */
+  .kpi-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .kpi-box {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 10px 8px;
+    text-align: center;
+  }
+  .kpi-val { font-size: 20px; font-weight: 700; line-height: 1; }
+  .kpi-lbl { font-size: 9px; color: var(--text3); margin-top: 3px; line-height: 1.3; }
+
+  /* Version tabs in right panel */
+  .version-tabs {
+    display: flex; gap: 4px; margin-bottom: 12px;
+  }
+  .vtab {
+    padding: 5px 12px; border-radius: 8px;
+    font-size: 11px; font-weight: 600; cursor: pointer;
+    border: 1px solid var(--border);
+    color: var(--text3);
+    transition: all 0.15s;
+  }
+  .vtab.active {
+    background: rgba(249,115,22,0.15);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  /* Responsive */
+  @media (max-width: 700px) {
+    .main-layout { grid-template-columns: 1fr; }
+    .phone-frame { width: 100%; max-width: 360px; margin: 0 auto; }
+    .right-panel { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="app-header">
+  <div class="app-brand">
+    <div class="brand-icon">🛣️</div>
+    <div class="brand-text">
+      <h1>IIRSA Norte Alerta</h1>
+      <p>App Ciudadana + CCO + Integración OSITRAN</p>
+    </div>
+  </div>
+  <div class="header-badges">
+    <span class="badge badge-orange">Prototipo v1.0</span>
+    <span class="badge badge-blue">CCO Integrado</span>
+    <span class="badge badge-green">API OSITRAN</span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main-layout">
+
+  <!-- PHONE -->
+  <div class="phone-frame">
+    <div class="phone-notch">
+      <div class="notch-pill"></div>
+      <div class="notch-cam"></div>
+    </div>
+
+    <div class="phone-screen">
+
+      <!-- ════ SCREEN 1: MAPA ════ -->
+      <div class="screen active" id="screen-map">
+        <div class="map-topbar">
+          <div class="map-search">
+            <span>🔍</span>
+            <span>Buscar en IIRSA Norte...</span>
+          </div>
+          <div class="map-user-btn" id="userBtn" onclick="showUserMenu()">C</div>
+        </div>
+
+        <!-- SVG Map of IIRSA Norte route -->
+        <svg width="100%" height="100%" viewBox="0 0 320 600" style="position:absolute;top:0;left:0;" xmlns="http://www.w3.org/2000/svg">
+          <!-- Background -->
+          <rect width="320" height="600" fill="#0d1020"/>
+          <!-- Terrain zones -->
+          <ellipse cx="80" cy="180" rx="120" ry="90" fill="#0d1a12" opacity="0.7"/>
+          <ellipse cx="220" cy="120" rx="80" ry="60" fill="#101a10" opacity="0.6"/>
+          <ellipse cx="160" cy="380" rx="140" ry="120" fill="#0d1a15" opacity="0.5"/>
+          <!-- Rivers -->
+          <path d="M30 150 Q60 160 80 200 Q100 240 85 280 Q70 310 90 340 Q110 360 120 400" stroke="#1d4a6e" stroke-width="4" fill="none" opacity="0.7" stroke-linecap="round"/>
+          <path d="M200 320 Q220 340 240 380 Q255 410 250 440" stroke="#1d4a6e" stroke-width="3" fill="none" opacity="0.6" stroke-linecap="round"/>
+          <!-- Main IIRSA Norte road: Paita → Olmos → Bagua → Tarapoto → Yurimaguas -->
+          <path d="M40 540 Q55 510 60 490 Q75 460 90 440 Q115 410 120 380 Q130 350 140 330 Q155 300 160 270 Q168 240 175 210 Q185 175 200 150 Q220 115 240 90 Q255 70 270 55" stroke="#6b7280" stroke-width="5" fill="none" stroke-linecap="round"/>
+          <!-- Road highlight (active lane) -->
+          <path d="M40 540 Q55 510 60 490 Q75 460 90 440 Q115 410 120 380 Q130 350 140 330 Q155 300 160 270 Q168 240 175 210 Q185 175 200 150 Q220 115 240 90 Q255 70 270 55" stroke="#e2a44a" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.85"/>
+          <!-- Road center dashes -->
+          <path d="M40 540 Q55 510 60 490 Q75 460 90 440 Q115 410 120 380 Q130 350 140 330 Q155 300 160 270 Q168 240 175 210 Q185 175 200 150 Q220 115 240 90 Q255 70 270 55" stroke="rgba(255,255,255,0.15)" stroke-width="1" fill="none" stroke-dasharray="8,10" stroke-linecap="round"/>
+          <!-- Paita -->
+          <circle cx="40" cy="540" r="8" fill="#f97316" opacity="0.9"/>
+          <circle cx="40" cy="540" r="14" fill="#f97316" opacity="0.15"/>
+          <text x="54" y="543" fill="#f97316" font-size="9" font-family="Barlow,sans-serif" font-weight="700">PAITA</text>
+          <!-- Piura -->
+          <circle cx="60" cy="497" r="5" fill="#fbbf24" opacity="0.9"/>
+          <text x="68" y="500" fill="#fbbf24" font-size="8" font-family="Barlow,sans-serif">Piura</text>
+          <!-- Olmos -->
+          <circle cx="105" cy="424" r="6" fill="#fbbf24" opacity="0.9"/>
+          <text x="114" y="428" fill="#fbbf24" font-size="8" font-family="Barlow,sans-serif">Olmos</text>
+          <!-- Bagua -->
+          <circle cx="150" cy="317" r="6" fill="#fbbf24" opacity="0.9"/>
+          <text x="159" y="321" fill="#fbbf24" font-size="8" font-family="Barlow,sans-serif">Bagua</text>
+          <!-- Tarapoto -->
+          <circle cx="193" cy="160" r="7" fill="#fbbf24" opacity="0.9"/>
+          <text x="202" y="164" fill="#fbbf24" font-size="8" font-family="Barlow,sans-serif">Tarapoto</text>
+          <!-- Yurimaguas -->
+          <circle cx="270" cy="55" r="8" fill="#f97316" opacity="0.9"/>
+          <circle cx="270" cy="55" r="14" fill="#f97316" opacity="0.15"/>
+          <text x="225" y="44" fill="#f97316" font-size="9" font-family="Barlow,sans-serif" font-weight="700">YURIMAGUAS</text>
+
+          <!-- Incident markers on the road -->
+          <!-- Accidente km 342 -->
+          <circle cx="115" cy="400" r="10" fill="#f87171" opacity="0.9"/>
+          <text x="110" y="404" fill="white" font-size="10" font-family="Barlow,sans-serif" font-weight="700">!</text>
+          <!-- Derrumbe km 580 -->
+          <circle cx="155" cy="295" r="10" fill="#fbbf24" opacity="0.9"/>
+          <text x="150" y="300" fill="#0d0f1a" font-size="10" font-family="Barlow,sans-serif" font-weight="700">⚠</text>
+          <!-- Neblina km 820 -->
+          <circle cx="186" cy="176" r="8" fill="#94a3b8" opacity="0.8"/>
+          <text x="180" y="180" fill="white" font-size="9" font-family="Barlow,sans-serif">≈</text>
+          <!-- CCO punto -->
+          <rect x="132" y="325" width="18" height="14" rx="4" fill="#38bdf8" opacity="0.9"/>
+          <text x="133" y="335" fill="#0d0f1a" font-size="8" font-family="Barlow,sans-serif" font-weight="700">CCO</text>
+
+          <!-- Scale bar -->
+          <line x1="240" y1="565" x2="295" y2="565" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+          <line x1="240" y1="560" x2="240" y2="570" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+          <line x1="295" y1="560" x2="295" y2="570" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+          <text x="267" y="558" fill="rgba(255,255,255,0.4)" font-size="8" text-anchor="middle" font-family="Barlow,sans-serif">100 km</text>
+
+          <!-- Legend -->
+          <circle cx="18" cy="575" r="5" fill="#f87171" opacity="0.9"/>
+          <text x="26" y="578" fill="rgba(255,255,255,0.5)" font-size="8" font-family="Barlow,sans-serif">Accidente</text>
+          <circle cx="18" cy="588" r="5" fill="#fbbf24" opacity="0.9"/>
+          <text x="26" y="591" fill="rgba(255,255,255,0.5)" font-size="8" font-family="Barlow,sans-serif">Incidencia</text>
+        </svg>
+
+        <!-- Floating chips -->
+        <div class="map-chip" style="top:175px;left:125px;" onclick="goScreen('cco')">
+          <div class="chip-dot" style="background:#f87171;"></div> Accidente · km 342
+        </div>
+        <div class="map-chip" style="top:250px;left:25px;" onclick="goScreen('cco')">
+          <div class="chip-dot" style="background:#fbbf24;"></div> Derrumbe · km 580
+        </div>
+
+        <!-- Bottom panel -->
+        <div class="map-bottom">
+          <div class="map-bottom-row">
+            <div class="map-stat">
+              <div class="map-stat-val" style="color:#f87171;">3</div>
+              <div class="map-stat-lbl">Accidentes activos</div>
+            </div>
+            <div class="map-stat">
+              <div class="map-stat-val" style="color:#fbbf24;">5</div>
+              <div class="map-stat-lbl">Incidencias</div>
+            </div>
+            <div class="map-stat">
+              <div class="map-stat-val" style="color:#34d399;">971km</div>
+              <div class="map-stat-lbl">Ruta total</div>
+            </div>
+          </div>
+          <button class="report-fab" onclick="goScreen('report')">
+            ⚠️  Reportar Incidencia
+          </button>
+        </div>
+      </div>
+
+      <!-- ════ SCREEN 2: REPORTAR ════ -->
+      <div class="screen" id="screen-report">
+        <div class="screen-header">
+          <div class="back-btn" onclick="goScreen('map')">←</div>
+          <h2>Reportar Incidencia</h2>
+        </div>
+        <div class="report-form">
+          <!-- User type -->
+          <div class="form-section">
+            <div class="form-label">Tipo de Usuario</div>
+            <div class="user-toggle">
+              <div class="ut-btn active" onclick="selectUT(this)">
+                <span class="ut-icon">🙋</span>Ciudadano
+              </div>
+              <div class="ut-btn" onclick="selectUT(this)">
+                <span class="ut-icon">👮</span>PNP / Comisaría
+              </div>
+              <div class="ut-btn" onclick="selectUT(this)">
+                <span class="ut-icon">🏗️</span>Concesionaria
+              </div>
+            </div>
+          </div>
+
+          <!-- Incident type -->
+          <div class="form-section">
+            <div class="form-label">Tipo de Incidencia</div>
+            <div class="incident-grid">
+              <div class="incident-btn active" onclick="selectIncident(this)">
+                <div class="icon">💥</div>
+                <div class="lbl">Accidente de tránsito</div>
+              </div>
+              <div class="incident-btn" onclick="selectIncident(this)">
+                <div class="icon">⛰️</div>
+                <div class="lbl">Derrumbe / Huayco</div>
+              </div>
+              <div class="incident-btn" onclick="selectIncident(this)">
+                <div class="icon">🚗</div>
+                <div class="lbl">Vehículo varado</div>
+              </div>
+              <div class="incident-btn" onclick="selectIncident(this)">
+                <div class="icon">🌫️</div>
+                <div class="lbl">Neblina / Niebla</div>
+              </div>
+              <div class="incident-btn" onclick="selectIncident(this)">
+                <div class="icon">🚧</div>
+                <div class="lbl">Obra / Cierre de vía</div>
+              </div>
+              <div class="incident-btn" onclick="selectIncident(this)">
+                <div class="icon">⚡</div>
+                <div class="lbl">Otro evento</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Location -->
+          <div class="form-section">
+            <div class="form-label">Ubicación</div>
+            <div class="location-row">
+              <div class="loc-icon">📍</div>
+              <div class="loc-text">
+                <div class="loc-main">km 342+500 — Sector Olmos</div>
+                <div class="loc-sub">Lat: -5.9821 / Lon: -79.7234 · IIRSA Norte</div>
+              </div>
+              <div class="loc-action">Editar</div>
+            </div>
+          </div>
+
+          <!-- Severity -->
+          <div class="form-section">
+            <div class="form-label">Severidad del Evento</div>
+            <div class="severity-bar">
+              <div class="sev-btn low" onclick="selectSev(this)">🟢 Leve</div>
+              <div class="sev-btn med active" onclick="selectSev(this)">🟡 Moderado</div>
+              <div class="sev-btn high" onclick="selectSev(this)">🔴 Grave</div>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="form-section">
+            <div class="form-label">Descripción</div>
+            <textarea class="form-input" rows="3" placeholder="Describe brevemente la incidencia..."></textarea>
+          </div>
+
+          <!-- Photos -->
+          <div class="form-section">
+            <div class="form-label">Evidencia Fotográfica</div>
+            <div class="photo-row">
+              <div class="photo-preview">
+                <svg viewBox="0 0 72 60" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="72" height="60" fill="#1e2240"/>
+                  <rect x="8" y="10" width="56" height="35" rx="3" fill="#252b4a"/>
+                  <rect x="15" y="16" width="25" height="22" rx="2" fill="#374060"/>
+                  <rect x="44" y="20" width="14" height="14" rx="2" fill="#374060"/>
+                  <circle cx="24" cy="27" r="5" fill="#4a5580"/>
+                  <text x="36" y="55" fill="#64748b" font-size="7" text-anchor="middle" font-family="sans-serif">Vista campo</text>
+                </svg>
+              </div>
+              <div class="photo-slot" onclick="">
+                <span>📷</span>
+                <span class="ps-lbl">Tomar foto</span>
+              </div>
+              <div class="photo-slot" onclick="">
+                <span>🎥</span>
+                <span class="ps-lbl">Video</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- CCO check -->
+          <div class="form-section" style="background:rgba(56,189,248,0.08);border:1px solid rgba(56,189,248,0.2);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+            <span style="font-size:18px;">📡</span>
+            <div style="flex:1;">
+              <div style="font-size:11px;font-weight:600;color:var(--blue);">Enviar al CCO · OSITRAN</div>
+              <div style="font-size:10px;color:var(--text3);margin-top:1px;">El evento se reportará automáticamente al Centro de Control de Operaciones y a la plataforma OSITRAN</div>
+            </div>
+            <div style="width:16px;height:16px;border-radius:4px;background:var(--blue);display:flex;align-items:center;justify-content:center;font-size:10px;color:#0d0f1a;font-weight:700;flex-shrink:0;">✓</div>
+          </div>
+
+          <button class="submit-btn" onclick="submitReport()">
+            📤  Enviar Reporte
+          </button>
+        </div>
+      </div>
+
+      <!-- ════ SCREEN 3: CCO PANEL ════ -->
+      <div class="screen" id="screen-cco">
+        <div class="screen-header">
+          <div class="back-btn" onclick="goScreen('map')">←</div>
+          <h2>🎛️ Panel CCO · IIRSA Norte</h2>
+        </div>
+
+        <div class="cco-header-stats">
+          <div class="cco-stat">
+            <div class="cco-stat-val" style="color:#f87171;">3</div>
+            <div class="cco-stat-lbl">Accidentes</div>
+          </div>
+          <div class="cco-stat">
+            <div class="cco-stat-val" style="color:#fbbf24;">5</div>
+            <div class="cco-stat-lbl">Alertas</div>
+          </div>
+          <div class="cco-stat">
+            <div class="cco-stat-val" style="color:#34d399;">12</div>
+            <div class="cco-stat-lbl">Atendidos hoy</div>
+          </div>
+          <div class="cco-stat">
+            <div class="cco-stat-val" style="color:#38bdf8;">4</div>
+            <div class="cco-stat-lbl">Enviados OSITRAN</div>
+          </div>
+        </div>
+
+        <div class="cco-filter-row">
+          <div class="filter-chip active" onclick="filterIncidents(this,'all')">Todos</div>
+          <div class="filter-chip" onclick="filterIncidents(this,'accidente')">💥 Accidentes</div>
+          <div class="filter-chip" onclick="filterIncidents(this,'derrumbe')">⛰️ Derrumbes</div>
+          <div class="filter-chip" onclick="filterIncidents(this,'varado')">🚗 Varados</div>
+          <div class="filter-chip" onclick="filterIncidents(this,'ciudadano')">🙋 Ciudadanos</div>
+          <div class="filter-chip" onclick="filterIncidents(this,'pnp')">👮 PNP</div>
+        </div>
+
+        <div class="incidents-list" id="incidentsList">
+          <!-- Card 1 -->
+          <div class="incident-card" data-type="accidente">
+            <div class="inc-top">
+              <div class="inc-type-badge" style="background:rgba(248,113,113,0.15);">💥</div>
+              <div class="inc-info">
+                <div class="inc-title">Accidente de tránsito — Colisión múltiple</div>
+                <div class="inc-loc">📍 km 342+500 · Sector Olmos, Lambayeque</div>
+              </div>
+            </div>
+            <div class="inc-meta">
+              <span class="inc-time">⏱ hace 12 min</span>
+              <span class="inc-sev" style="background:rgba(248,113,113,0.15);color:#f87171;">GRAVE</span>
+              <span class="inc-source">👮 PNP Olmos</span>
+            </div>
+            <div class="inc-detail-row">
+              <span class="detail-item">🚑 Ambulancia: en camino</span>
+              <span class="detail-item">📸 3 fotos</span>
+              <div class="inc-actions">
+                <button class="inc-action-btn btn-ositran">📡 OSITRAN</button>
+                <button class="inc-action-btn btn-attend">Atender</button>
+              </div>
+            </div>
+          </div>
+          <!-- Card 2 -->
+          <div class="incident-card" data-type="derrumbe">
+            <div class="inc-top">
+              <div class="inc-type-badge" style="background:rgba(251,191,36,0.15);">⛰️</div>
+              <div class="inc-info">
+                <div class="inc-title">Derrumbe parcial de talud</div>
+                <div class="inc-loc">📍 km 580+200 · Sector Pomahuaca, Jaén</div>
+              </div>
+            </div>
+            <div class="inc-meta">
+              <span class="inc-time">⏱ hace 34 min</span>
+              <span class="inc-sev" style="background:rgba(251,191,36,0.15);color:#fbbf24;">MODERADO</span>
+              <span class="inc-source">🙋 Ciudadano</span>
+            </div>
+            <div class="inc-detail-row">
+              <span class="detail-item">🚧 Carril derecho bloqueado</span>
+              <div class="inc-actions">
+                <button class="inc-action-btn btn-ositran">📡 OSITRAN</button>
+                <button class="inc-action-btn btn-attend">Atender</button>
+              </div>
+            </div>
+          </div>
+          <!-- Card 3 -->
+          <div class="incident-card" data-type="varado">
+            <div class="inc-top">
+              <div class="inc-type-badge" style="background:rgba(148,163,184,0.15);">🚗</div>
+              <div class="inc-info">
+                <div class="inc-title">Vehículo pesado varado — Tracto-camión</div>
+                <div class="inc-loc">📍 km 712+000 · Sector Pedro Ruiz, Bagua</div>
+              </div>
+            </div>
+            <div class="inc-meta">
+              <span class="inc-time">⏱ hace 1h 10min</span>
+              <span class="inc-sev" style="background:rgba(148,163,184,0.15);color:#94a3b8;">LEVE</span>
+              <span class="inc-source">🚗 Conductor</span>
+            </div>
+            <div class="inc-detail-row">
+              <span class="detail-item">🔧 Grúa solicitada</span>
+              <div class="inc-actions">
+                <button class="inc-action-btn btn-close">✓ Cerrar</button>
+              </div>
+            </div>
+          </div>
+          <!-- Card 4 -->
+          <div class="incident-card" data-type="accidente ciudadano">
+            <div class="inc-top">
+              <div class="inc-type-badge" style="background:rgba(248,113,113,0.15);">💥</div>
+              <div class="inc-info">
+                <div class="inc-title">Atropello — peatón en calzada</div>
+                <div class="inc-loc">📍 km 820+300 · Sector Rioja, San Martín</div>
+              </div>
+            </div>
+            <div class="inc-meta">
+              <span class="inc-time">⏱ hace 2h 05min</span>
+              <span class="inc-sev" style="background:rgba(248,113,113,0.15);color:#f87171;">GRAVE</span>
+              <span class="inc-source">🙋 Ciudadano</span>
+            </div>
+            <div class="inc-detail-row">
+              <span class="detail-item">✅ Atendido — OSITRAN notificado</span>
+              <div class="inc-actions">
+                <button class="inc-action-btn btn-close" style="opacity:0.5;">✓ Cerrado</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ════ SCREEN 4: OSITRAN API ════ -->
+      <div class="screen" id="screen-api">
+        <div class="screen-header">
+          <div class="back-btn" onclick="goScreen('map')">←</div>
+          <h2>📡 Integración OSITRAN</h2>
+        </div>
+        <div class="api-screen-content">
+          <div class="api-status-banner">
+            <div class="status-dot"></div>
+            <div class="status-text">
+              <div class="st-main">API OSITRAN — Conectado</div>
+              <div class="st-sub">Última sincronización: hace 2 min · 4 eventos enviados hoy</div>
+            </div>
+          </div>
+
+          <!-- Endpoint 1 -->
+          <div class="api-flow-card">
+            <div class="api-flow-header">
+              <span class="api-flow-icon">📤</span>
+              <span class="api-flow-title">Enviar Evento al Sistema OSITRAN</span>
+              <span class="api-flow-method method-post">POST</span>
+            </div>
+            <div class="api-flow-body">
+              <div class="api-endpoint">POST /api/v1/ositran/eventos</div>
+              <div class="api-fields">
+                <div class="api-field"><span class="api-field-key">ruta_id</span><span class="api-field-val">"IIRSA_NORTE_001"</span></div>
+                <div class="api-field"><span class="api-field-key">tipo_evento</span><span class="api-field-val">"ACCIDENTE_TRANSITO"</span></div>
+                <div class="api-field"><span class="api-field-key">km_referencia</span><span class="api-field-val">342.5</span></div>
+                <div class="api-field"><span class="api-field-key">severidad</span><span class="api-field-val">"GRAVE"</span></div>
+                <div class="api-field"><span class="api-field-key">coordenadas</span><span class="api-field-val">[-5.982, -79.723]</span></div>
+                <div class="api-field"><span class="api-field-key">fuente_reporte</span><span class="api-field-val">"PNP_OLMOS"</span></div>
+                <div class="api-field"><span class="api-field-key">timestamp</span><span class="api-field-val">"2026-04-07T14:32:11Z"</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Endpoint 2 -->
+          <div class="api-flow-card">
+            <div class="api-flow-header">
+              <span class="api-flow-icon">📥</span>
+              <span class="api-flow-title">Consultar Estado de Vía</span>
+              <span class="api-flow-method method-get">GET</span>
+            </div>
+            <div class="api-flow-body">
+              <div class="api-endpoint">GET /api/v1/ositran/via-estado?ruta=IIRSA_NORTE&km_ini=300&km_fin=900</div>
+              <div class="api-fields">
+                <div class="api-field"><span class="api-field-key">nivel_servicio</span><span class="api-field-val" style="color:#fbbf24;">"B — Condición Regular"</span></div>
+                <div class="api-field"><span class="api-field-key">alertas_activas</span><span class="api-field-val">8</span></div>
+                <div class="api-field"><span class="api-field-key">ultima_inspeccion</span><span class="api-field-val">"2026-04-06"</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- WebSocket CCO -->
+          <div class="api-flow-card">
+            <div class="api-flow-header">
+              <span class="api-flow-icon">🔄</span>
+              <span class="api-flow-title">Stream en Tiempo Real — CCO</span>
+              <span class="api-flow-method method-ws">WS</span>
+            </div>
+            <div class="api-flow-body">
+              <div class="api-endpoint">wss://cco.iirsanorte.pe/stream/eventos</div>
+              <div class="api-log" id="apiLog">
+                <div class="log-line log-success">[14:32:11] ✓ EVENTO_ENVIADO id=EVT-20260407-0042 → OSITRAN</div>
+                <div class="log-line log-info">[14:31:55] ← ESTADO_VIA km_342 nivel_servicio=B</div>
+                <div class="log-line log-info">[14:30:22] ← CCO_ALERTA derrumbe km_580 severidad=MOD</div>
+                <div class="log-line log-success">[14:29:10] ✓ PNP_SYNC comisaria=OLMOS 3_nuevos_reportes</div>
+                <div class="log-line log-warn">[14:28:44] ⚠ RECONEXION ws timeout — reintentando...</div>
+                <div class="log-line log-success">[14:28:47] ✓ RECONECTADO latencia=45ms</div>
+              </div>
+            </div>
+          </div>
+
+          <button class="submit-btn" style="margin-top:4px;" onclick="addLogEntry()">
+            🔄  Simular Envío a OSITRAN
+          </button>
+        </div>
+      </div>
+
+      <!-- ════ SCREEN 5: SERVICIOS V2 ════ -->
+      <div class="screen" id="screen-services">
+        <div class="screen-header">
+          <div class="back-btn" onclick="goScreen('map')">←</div>
+          <h2>Servicios en Ruta</h2>
+        </div>
+        <div class="v2-banner">
+          <span>🚀</span>
+          <span style="font-size:10px;color:var(--purple);">Versión 2.0 — Directorio de servicios en la IIRSA Norte · Actualizado en tiempo real</span>
+        </div>
+        <div class="services-filter">
+          <div class="svc-filter active" onclick="filterSvc(this,'all')">
+            <span class="sf-icon">🗺️</span>Todo
+          </div>
+          <div class="svc-filter" onclick="filterSvc(this,'grifo')">
+            <span class="sf-icon">⛽</span>Grifos
+          </div>
+          <div class="svc-filter" onclick="filterSvc(this,'rest')">
+            <span class="sf-icon">🍽️</span>Restaurantes
+          </div>
+          <div class="svc-filter" onclick="filterSvc(this,'hotel')">
+            <span class="sf-icon">🏨</span>Hoteles
+          </div>
+          <div class="svc-filter" onclick="filterSvc(this,'mec')">
+            <span class="sf-icon">🔧</span>Talleres
+          </div>
+        </div>
+        <div class="services-list">
+          <!-- Grifo -->
+          <div class="service-card" data-svc="grifo">
+            <div class="svc-icon-box" style="background:rgba(251,191,36,0.15);">⛽</div>
+            <div class="svc-info">
+              <div class="svc-name">Grifo REPSOL — Olmos</div>
+              <div class="svc-sub">km 340+200 · Abierto 24h</div>
+              <div class="svc-bottom">
+                <span class="svc-dist">📍 2.3 km</span>
+                <span class="svc-price">S/ 14.80/gal</span>
+                <span class="svc-avail avail-yes">Abierto</span>
+                <button class="svc-nav-btn">Navegar</button>
+              </div>
+            </div>
+          </div>
+          <!-- Hotel -->
+          <div class="service-card" data-svc="hotel">
+            <div class="svc-icon-box" style="background:rgba(167,139,250,0.15);">🏨</div>
+            <div class="svc-info">
+              <div class="svc-name">Hotel El Tambo — Jaén</div>
+              <div class="svc-sub">km 570+000 · Centro de Jaén · ⭐⭐⭐</div>
+              <div class="svc-bottom">
+                <span class="svc-dist">📍 8.5 km</span>
+                <span class="svc-price">S/ 80/noche</span>
+                <span class="svc-avail avail-yes">Disponible</span>
+                <button class="svc-nav-btn">Navegar</button>
+              </div>
+            </div>
+          </div>
+          <!-- Restaurante -->
+          <div class="service-card" data-svc="rest">
+            <div class="svc-icon-box" style="background:rgba(52,211,153,0.15);">🍽️</div>
+            <div class="svc-info">
+              <div class="svc-name">Rest. La Curva — Bagua</div>
+              <div class="svc-sub">km 715+000 · Comida regional</div>
+              <div class="svc-bottom">
+                <span class="svc-dist">📍 3.1 km</span>
+                <span class="svc-price">Menú S/ 12</span>
+                <span class="svc-avail avail-yes">Abierto</span>
+                <button class="svc-nav-btn">Navegar</button>
+              </div>
+            </div>
+          </div>
+          <!-- Taller -->
+          <div class="service-card" data-svc="mec">
+            <div class="svc-icon-box" style="background:rgba(248,113,113,0.15);">🔧</div>
+            <div class="svc-info">
+              <div class="svc-name">Taller Mecánico Rápido</div>
+              <div class="svc-sub">km 718+500 · Especialidad vehículos pesados</div>
+              <div class="svc-bottom">
+                <span class="svc-dist">📍 6.7 km</span>
+                <span class="svc-avail avail-yes">Disponible</span>
+                <button class="svc-nav-btn">Navegar</button>
+              </div>
+            </div>
+          </div>
+          <!-- Grifo 2 -->
+          <div class="service-card" data-svc="grifo">
+            <div class="svc-icon-box" style="background:rgba(251,191,36,0.15);">⛽</div>
+            <div class="svc-info">
+              <div class="svc-name">Grifo PETROPERU — Moyobamba</div>
+              <div class="svc-sub">km 850+000 · Diésel y gasohol</div>
+              <div class="svc-bottom">
+                <span class="svc-dist">📍 38 km</span>
+                <span class="svc-price">S/ 14.45/gal</span>
+                <span class="svc-avail avail-no">Sin stock B5</span>
+                <button class="svc-nav-btn">Navegar</button>
+              </div>
+            </div>
+          </div>
+          <!-- Hotel 2 -->
+          <div class="service-card" data-svc="hotel">
+            <div class="svc-icon-box" style="background:rgba(167,139,250,0.15);">🏨</div>
+            <div class="svc-info">
+              <div class="svc-name">Casa Andina Select — Tarapoto</div>
+              <div class="svc-sub">km 920+000 · Centro Tarapoto · ⭐⭐⭐⭐</div>
+              <div class="svc-bottom">
+                <span class="svc-dist">📍 12 km</span>
+                <span class="svc-price">S/ 220/noche</span>
+                <span class="svc-avail avail-yes">Disponible</span>
+                <button class="svc-nav-btn">Navegar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- phone-screen -->
+
+    <!-- BOTTOM NAV -->
+    <div class="phone-nav">
+      <button class="nav-btn active" onclick="goScreen('map')" id="nav-map">
+        <span class="nav-icon">🗺️</span>
+        <span>Mapa</span>
+        <div class="nav-indicator"></div>
+      </button>
+      <button class="nav-btn" onclick="goScreen('report')" id="nav-report">
+        <span class="nav-icon">⚠️</span>
+        <span>Reportar</span>
+        <div class="nav-indicator"></div>
+      </button>
+      <button class="nav-btn" onclick="goScreen('cco')" id="nav-cco">
+        <span class="nav-icon">🎛️</span>
+        <span>CCO</span>
+        <div class="nav-indicator"></div>
+      </button>
+      <button class="nav-btn" onclick="goScreen('api')" id="nav-api">
+        <span class="nav-icon">📡</span>
+        <span>OSITRAN</span>
+        <div class="nav-indicator"></div>
+      </button>
+      <button class="nav-btn" onclick="goScreen('services')" id="nav-services">
+        <span class="nav-icon">🛎️</span>
+        <span>Servicios</span>
+        <div class="nav-indicator"></div>
+      </button>
+    </div>
+  </div><!-- phone-frame -->
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+
+    <!-- Architecture card -->
+    <div class="info-card">
+      <h3><span class="ic-icon">🏗️</span> Arquitectura del Sistema</h3>
+      <div class="arch-flow">
+        <div class="arch-node">
+          <span class="an-icon">🙋</span>
+          <div class="an-info">
+            <div class="an-name">Ciudadanos / PNP / Concesionaria</div>
+            <div class="an-desc">Reportan eventos en tiempo real desde la vía</div>
+          </div>
+          <span class="an-badge" style="background:rgba(249,115,22,0.15);color:#fb923c;">Reporte</span>
+        </div>
+        <div class="arch-arrow">↓ WebSocket + REST API</div>
+        <div class="arch-node">
+          <span class="an-icon">🎛️</span>
+          <div class="an-info">
+            <div class="an-name">CCO — Centro de Control IIRSA Norte</div>
+            <div class="an-desc">Valida, clasifica y despacha respuesta operativa</div>
+          </div>
+          <span class="an-badge" style="background:rgba(56,189,248,0.15);color:#38bdf8;">Control</span>
+        </div>
+        <div class="arch-arrow">↓ API POST /ositran/eventos</div>
+        <div class="arch-node">
+          <span class="an-icon">📡</span>
+          <div class="an-info">
+            <div class="an-name">Plataforma OSITRAN</div>
+            <div class="an-desc">GMAO Central — Supervisión regulatoria</div>
+          </div>
+          <span class="an-badge" style="background:rgba(52,211,153,0.15);color:#34d399;">Regulador</span>
+        </div>
+        <div class="arch-arrow">↓ Datos consolidados</div>
+        <div class="arch-node">
+          <span class="an-icon">📊</span>
+          <div class="an-info">
+            <div class="an-name">Dashboard Power BI / Gemelo Digital</div>
+            <div class="an-desc">Análisis de incidencias, KPIs, reportes MTC</div>
+          </div>
+          <span class="an-badge" style="background:rgba(167,139,250,0.15);color:#a78bfa;">Analytics</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="info-card">
+      <h3><span class="ic-icon">📊</span> KPIs de la Ruta IIRSA Norte</h3>
+      <div class="kpi-row" style="margin-bottom:10px;">
+        <div class="kpi-box">
+          <div class="kpi-val" style="color:#f87171;">3</div>
+          <div class="kpi-lbl">Accidentes activos</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-val" style="color:#fbbf24;">8</div>
+          <div class="kpi-lbl">Alertas totales</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-val" style="color:#34d399;">94%</div>
+          <div class="kpi-lbl">Nivel servicio</div>
+        </div>
+      </div>
+      <div class="kpi-row">
+        <div class="kpi-box">
+          <div class="kpi-val" style="color:#38bdf8;">971</div>
+          <div class="kpi-lbl">km ruta total</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-val" style="color:#fb923c;">18min</div>
+          <div class="kpi-lbl">Tiempo resp. prom.</div>
+        </div>
+        <div class="kpi-box">
+          <div class="kpi-val" style="color:#a78bfa;">47</div>
+          <div class="kpi-lbl">Reportes este mes</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features -->
+    <div class="info-card">
+      <h3><span class="ic-icon">✨</span> Funcionalidades por Versión</h3>
+      <div class="version-tabs">
+        <div class="vtab active" onclick="showVersion(this,'v1')">Versión 1.0</div>
+        <div class="vtab" onclick="showVersion(this,'v2')">Versión 2.0</div>
+      </div>
+      <div class="feature-list" id="feat-v1">
+        <div class="feature-item">
+          <span class="feat-icon">🗺️</span>
+          <div class="feat-text">
+            <div class="ft-title">Mapa interactivo IIRSA Norte</div>
+            <div class="ft-desc">Visualización de incidencias en tiempo real sobre el trazo Paita–Yurimaguas con georreferenciación por km.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <span class="feat-icon">📤</span>
+          <div class="feat-text">
+            <div class="ft-title">Reporte ciudadano y PNP</div>
+            <div class="ft-desc">Formulario rápido con tipo, severidad, ubicación GPS, fotos y video. Identifica si viene de ciudadano, comisaría o concesionaria.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <span class="feat-icon">🎛️</span>
+          <div class="feat-text">
+            <div class="ft-title">Panel CCO integrado</div>
+            <div class="ft-desc">Dashboard de gestión operativa para el Centro de Control de Operaciones de IIRSA Norte.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <span class="feat-icon">📡</span>
+          <div class="feat-text">
+            <div class="ft-title">API OSITRAN — Tiempo real</div>
+            <div class="ft-desc">Integración automática REST + WebSocket para notificar eventos al sistema regulatorio de OSITRAN.</div>
+          </div>
+        </div>
+      </div>
+      <div class="feature-list" id="feat-v2" style="display:none;">
+        <div class="feature-item">
+          <span class="feat-icon">⛽</span>
+          <div class="feat-text">
+            <div class="ft-title">Directorio de grifos en ruta</div>
+            <div class="ft-desc">Precios, disponibilidad de combustible y distancia en tiempo real desde posición actual del conductor.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <span class="feat-icon">🍽️</span>
+          <div class="feat-text">
+            <div class="ft-title">Restaurantes y paraderos</div>
+            <div class="ft-desc">Menú del día, precios y horarios de establecimientos de alimentación en la vía.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <span class="feat-icon">🏨</span>
+          <div class="feat-text">
+            <div class="ft-title">Hoteles y hospedajes</div>
+            <div class="ft-desc">Disponibilidad, precios y reserva directa de establecimientos de hospedaje en las ciudades del corredor.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <span class="feat-icon">🔧</span>
+          <div class="feat-text">
+            <div class="ft-title">Talleres mecánicos</div>
+            <div class="ft-desc">Servicio de auxilio mecánico y talleres especializados en vehículos pesados a lo largo de la ruta.</div>
+          </div>
+        </div>
+        <div class="feature-item">
+          <span class="feat-icon">🤖</span>
+          <div class="feat-text">
+            <div class="ft-title">IA predictiva + Gemelo Digital</div>
+            <div class="ft-desc">Integración con el Gemelo Digital BIM/GIS de IIRSA Norte para predicción de zonas de riesgo y mantenimiento preventivo.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- right-panel -->
+
+</div><!-- main-layout -->
+
+<!-- Confirmation toast -->
+<div id="toast" style="display:none;position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#34d399;color:#0d1a10;padding:12px 20px;border-radius:12px;font-weight:700;font-size:13px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,0.4);">
+  ✓ Reporte enviado al CCO y OSITRAN
+</div>
+
+<script>
+  function goScreen(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('screen-' + id).classList.add('active');
+    const nb = document.getElementById('nav-' + id);
+    if (nb) nb.classList.add('active');
+  }
+
+  function selectIncident(el) {
+    document.querySelectorAll('.incident-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function selectSev(el) {
+    document.querySelectorAll('.sev-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function selectUT(el) {
+    document.querySelectorAll('.ut-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+  }
+
+  function filterIncidents(el, type) {
+    document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.incident-card').forEach(card => {
+      if (type === 'all') { card.style.display = ''; return; }
+      const dt = card.getAttribute('data-type') || '';
+      card.style.display = dt.includes(type) ? '' : 'none';
+    });
+  }
+
+  function filterSvc(el, type) {
+    document.querySelectorAll('.svc-filter').forEach(f => f.classList.remove('active'));
+    el.classList.add('active');
+    document.querySelectorAll('.service-card').forEach(card => {
+      if (type === 'all') { card.style.display = ''; return; }
+      const dt = card.getAttribute('data-svc') || '';
+      card.style.display = dt === type ? '' : 'none';
+    });
+  }
+
+  function submitReport() {
+    const toast = document.getElementById('toast');
+    toast.style.display = 'block';
+    setTimeout(() => { toast.style.display = 'none'; }, 2800);
+    // Add log entry in API screen
+    addLogEntry();
+    setTimeout(() => goScreen('map'), 1500);
+  }
+
+  function addLogEntry() {
+    const log = document.getElementById('apiLog');
+    const now = new Date();
+    const t = now.toTimeString().slice(0,8);
+    const evtId = 'EVT-2026' + String(Math.floor(Math.random()*9000+1000));
+    const line = document.createElement('div');
+    line.className = 'log-line log-success';
+    line.textContent = `[${t}] ✓ EVENTO_ENVIADO id=${evtId} tipo=ACCIDENTE_TRANSITO → OSITRAN HTTP 201`;
+    log.insertBefore(line, log.firstChild);
+  }
+
+  function showVersion(el, v) {
+    document.querySelectorAll('.vtab').forEach(t => t.classList.remove('active'));
+    el.classList.add('active');
+    document.getElementById('feat-v1').style.display = v === 'v1' ? '' : 'none';
+    document.getElementById('feat-v2').style.display = v === 'v2' ? '' : 'none';
+  }
+
+  function showUserMenu() {
+    alert('Perfil de usuario:\n\nNombre: Carlos Torres\nRol: Ciudadano\nReportes enviados: 4\nÚltima ubicación: km 342, IIRSA Norte');
+  }
+</script>
+</body>
+</html>
